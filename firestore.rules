@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Fields: uid, email, role, mfaEnabled, encryptedData
+    //
+    // Collection: transactions
+    // Fields: id, type, amount, currency, status, counterparty, reference, timestamp, authorUid
+    //
+    // Collection: audit_vault
+    // Fields: id, timestamp, uid, action, ip, details
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.authorUid;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // User Rules
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == userId && 
+                    request.resource.data.role == 'client'; // Default role
+      allow update: if isOwner(userId) && 
+                    request.resource.data.role == resource.data.role; // Cannot change own role
+    }
+
+    // Transaction Rules
+    match /transactions/{txId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
+      allow update: if isAdmin(); // Only admins can settle/hold transactions
+      allow delete: if false; // Transactions are immutable
+    }
+
+    // Audit Vault Rules
+    match /audit_vault/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated(); // App logs activity
+      allow update, delete: if false; // Audit logs are immutable
+    }
+  }
+}

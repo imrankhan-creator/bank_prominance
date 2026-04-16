@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Private user profile containing sensitive data.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "executive", "client"] },
+        "mfaEnabled": { "type": "boolean" },
+        "encryptedData": { "type": "string", "description": "AES-256 encrypted sensitive fields" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Transaction": {
+      "title": "Banking Transaction",
+      "description": "A ledger entry for capital movement.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["fiat", "crypto"] },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "settled", "held", "failed"] },
+        "counterparty": { "type": "string" },
+        "reference": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "authorUid": { "type": "string" }
+      },
+      "required": ["id", "type", "amount", "currency", "status", "authorUid"]
+    },
+    "AuditLog": {
+      "title": "Activity Audit Log",
+      "description": "Immutable log of system activity.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "uid": { "type": "string" },
+        "action": { "type": "string" },
+        "ip": { "type": "string" },
+        "details": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "uid", "action"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User private profiles"
+    },
+    "/transactions/{txId}": {
+      "schema": "Transaction",
+      "description": "Global ledger transactions"
+    },
+    "/audit_vault/{logId}": {
+      "schema": "AuditLog",
+      "description": "Immutable activity logs"
+    }
+  }
+}

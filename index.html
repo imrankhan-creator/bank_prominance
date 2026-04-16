@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prominence Institutional Banking</title>
+    <script>
+      // IFRAME COMPATIBILITY FIX:
+      // In some sandboxed environments (like the AI Studio preview), window.fetch
+      // is read-only. This getter/setter pair intercepts attempts by polyfills
+      // to overwrite fetch, preventing TypeErrors while preserving native functionality.
+      (function() {
+        const originalFetch = window.fetch;
+        try {
+          // Define a getter/setter pair. The setter will intercept and ignore
+          // any attempts to overwrite the global fetch, preventing the TypeError.
+          Object.defineProperty(window, 'fetch', {
+            get() { return originalFetch; },
+            set(v) { 
+              console.warn("Intercepted and blocked an attempt to overwrite window.fetch.");
+            },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          // Fallback for older environments
+          if (typeof global === 'undefined') {
+            window.global = Object.create(window);
+          }
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
